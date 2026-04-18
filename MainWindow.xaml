@@ -1,0 +1,74 @@
+﻿<Window x:Class="Drum_Machine.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Drum Machine" Height="600" Width="1000"
+        Background="#1E1E1E">
+
+    <Window.Resources>
+        <Style x:Key="StepButtonStyle" TargetType="ToggleButton">
+            <Setter Property="Margin" Value="2"/>
+            <Setter Property="MinWidth" Value="20"/>
+            <Setter Property="MinHeight" Value="20"/>
+            <Setter Property="Background" Value="#444"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="border" CornerRadius="4"
+                                Background="{TemplateBinding Background}"/>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="Orange"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#666"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10">
+
+            <Button Content="▶ Play" Click="Play_Click" Margin="2"/>
+            <Button Content="■ Stop" Click="Stop_Click" Margin="2"/>
+
+            <ToggleButton x:Name="LoopButton"
+              Content="Loop"
+              Margin="2"
+              Checked="Loop_Checked"
+              Unchecked="Loop_Unchecked"/>
+
+            <Button Content="💾 Save" Click="Save_Click" Margin="2"/>
+
+            <Button Content="Add Track" Click="AddTrack_Click" Margin="10,2"/>
+            <Button Content="- Track" Click="RemoveTrack_Click" Margin="2"/>
+
+            <TextBlock Text="BPM:" Foreground="White" Margin="20,0,5,0" VerticalAlignment="Center"/>
+
+            <Slider x:Name="BpmSlider"
+                    Width="150"
+                    Minimum="60"
+                    Maximum="200"
+                    Value="120"
+                    ValueChanged="BpmSlider_ValueChanged"/>
+
+            <TextBox x:Name="BpmTextBox"
+                     Width="50"
+                     Text="120"
+                     Margin="5,0"/>
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel x:Name="TracksPanel" Margin="10"/>
+        </ScrollViewer>
+    </Grid>
+</Window>
