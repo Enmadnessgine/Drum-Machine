@@ -1,4 +1,5 @@
 ﻿using Drum_Machine.Core;
+using Drum_Machine.Services;
 using Microsoft.Win32;
 using System;
 using System.Windows;
@@ -12,6 +13,7 @@ namespace Drum_Machine
     {
         private DrumMachine drumMachine;
         private DispatcherTimer timer;
+        private List<List<ToggleButton>> stepButtons = new List<List<ToggleButton>>();
 
         public MainWindow()
         {
@@ -21,10 +23,6 @@ namespace Drum_Machine
             LoopButton.IsChecked = true;
 
             InitTimer();
-
-            drumMachine.AddTrack("Kick");
-            drumMachine.AddTrack("Snare");
-            drumMachine.AddTrack("Hi-Hat");
 
             RenderTracks();
         }
@@ -39,15 +37,8 @@ namespace Drum_Machine
 
         private void Timer_Tick(object sender, EventArgs e)
         {
-            if (drumMachine == null) return;
-
             drumMachine.PlayStep();
-
-            if (!drumMachine.IsLooping &&
-                drumMachine.CurrentStep == drumMachine.StepsCount - 1)
-            {
-                timer.Stop();
-            }
+            HighlightStep(drumMachine.CurrentStep);
         }
 
         private void UpdateBPM()
@@ -97,7 +88,7 @@ namespace Drum_Machine
         private void LoadSample(int trackIndex)
         {
             var dialog = new OpenFileDialog();
-            dialog.Filter = "Audio Files (*.wav;*.mp3)|*.wav;*.mp3";
+            dialog.Filter = "WAV Files (*.wav)|*.wav";
 
             if (dialog.ShowDialog() == true)
             {
@@ -108,7 +99,17 @@ namespace Drum_Machine
 
         private void Save_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Save буде реалізовано пізніше");
+            var dialog = new Microsoft.Win32.SaveFileDialog();
+            dialog.Filter = "WAV file (*.wav)|*.wav";
+
+            if (dialog.ShowDialog() == true)
+            {
+                var buffer = drumMachine.RenderToBuffer();
+                var exporter = new WavExporter();
+                exporter.SaveWav(dialog.FileName, buffer);
+
+                MessageBox.Show("Saved!");
+            }
         }
 
         private void AddTrack_Click(object sender, RoutedEventArgs e)
@@ -137,12 +138,38 @@ namespace Drum_Machine
             }
         }
 
+        private void HighlightStep(int step)
+        {
+            if (stepButtons == null) return;
+
+            for (int i = 0; i < stepButtons.Count; i++)
+            {
+                for (int j = 0; j < stepButtons[i].Count; j++)
+                {
+                    var btn = stepButtons[i][j];
+
+                    if (j == step)
+                    {
+                        btn.Opacity = 1.0;
+                        btn.BorderBrush = System.Windows.Media.Brushes.Yellow;
+                        btn.BorderThickness = new Thickness(2);
+                    }
+                    else
+                    {
+                        btn.Opacity = 0.5;
+                        btn.BorderThickness = new Thickness(0);
+                    }
+                }
+            }
+        }
+
         private void RenderTracks()
         {
             if (TracksPanel == null || drumMachine == null)
                 return;
 
             TracksPanel.Children.Clear();
+            stepButtons.Clear();
 
             for (int i = 0; i < drumMachine.Tracks.Count; i++)
             {
@@ -215,6 +242,7 @@ namespace Drum_Machine
                 };
 
                 var stepsGrid = new UniformGrid { Columns = 16 };
+                var rowButtons = new List<ToggleButton>();
 
                 for (int j = 0; j < 16; j++)
                 {
@@ -230,7 +258,10 @@ namespace Drum_Machine
                     tbtn.Unchecked += (s, e) => track.Steps[step] = false;
 
                     stepsGrid.Children.Add(tbtn);
+                    rowButtons.Add(tbtn);
                 }
+
+                stepButtons.Add(rowButtons);
 
                 Grid.SetColumn(deleteBtn, 0);
                 Grid.SetColumn(leftPanel, 1);
