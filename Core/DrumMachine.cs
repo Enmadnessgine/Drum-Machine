@@ -7,7 +7,7 @@ namespace Drum_Machine.Core
 {
     public class DrumMachine
     {
-        public List<Track> Tracks { get; set; } = new List<Track>();
+        public List<BaseTrack> Tracks { get; set; } = new List<BaseTrack>();
         public int CurrentStep { get; private set; } = 0;
         public int StepsCount { get; } = 16;
         public bool IsLooping { get; set; } = true;
@@ -16,15 +16,11 @@ namespace Drum_Machine.Core
 
         public DrumMachine()
         {
-            Tracks = new List<Track>
+            string[] defaultNames = { "Kick", "Snare", "HiHat", "Clap", "Tom", "Cymbal" };
+            foreach (var name in defaultNames)
             {
-                new Track("Kick", StepsCount),
-                new Track("Snare", StepsCount),
-                new Track("HiHat", StepsCount),
-                new Track("Clap", StepsCount),
-                new Track("Tom", StepsCount),
-                new Track("Cymbal", StepsCount)
-            };
+                Tracks.Add(new DrumTrack(name, StepsCount));
+            }
         }
 
         public void ToggleStep(int trackIndex, int stepIndex, bool value)
@@ -38,23 +34,15 @@ namespace Drum_Machine.Core
             {
                 if (track.Steps[CurrentStep])
                 {
-                    player.Play(track.SamplePath, (float)track.Volume);
+                    track.Play(player);
                 }
             }
 
-            CurrentStep++;
-
-            if (CurrentStep >= StepsCount)
-            {
-                if (IsLooping)
-                    CurrentStep = 0;
-                else
-                    CurrentStep = StepsCount - 1;
-            }
+            CurrentStep = (CurrentStep + 1) % StepsCount;
         }
         public void AddTrack(string name)
         {
-            Tracks.Add(new Track(name, StepsCount));
+            Tracks.Add(new DrumTrack(name, StepsCount));
         }
 
         public void RemoveTrack(int index)
@@ -88,28 +76,30 @@ namespace Drum_Machine.Core
 
                 foreach (var track in Tracks)
                 {
-                    if (!track.Steps[step] || string.IsNullOrEmpty(track.SamplePath))
-                        continue;
-
-                    var sampleData = WavReader.ReadMono(track.SamplePath);
-
-                    int maxLen = Math.Min(sampleData.Length, buffer.Length - offset);
-
-                    for (int i = 0; i < maxLen; i++)
+                    if (track is DrumTrack drumTrack)
                     {
-                        int index = offset + i;
+                        if (!drumTrack.Steps[step] || string.IsNullOrEmpty(drumTrack.SamplePath))
+                            continue;
 
-                        if (index < buffer.Length)
+                        var sampleData = WavReader.ReadMono(drumTrack.SamplePath);
+
+                        int maxLen = Math.Min(sampleData.Length, buffer.Length - offset);
+
+                        for (int i = 0; i < maxLen; i++)
                         {
-                            float sample = sampleData[i] * (float)track.Volume * 0.3f;
+                            int index = offset + i;
+                            if (index < buffer.Length)
+                            {
+                                float sample = sampleData[i] * (float)drumTrack.Volume * 0.3f;
 
-                            buffer[index] += sample;
+                                buffer[index] += sample;
 
-                            if (buffer[index] > 1f) buffer[index] = 1f;
-                            if (buffer[index] < -1f) buffer[index] = -1f;
+                                if (buffer[index] > 1f) buffer[index] = 1f;
+                                if (buffer[index] < -1f) buffer[index] = -1f;
 
-                            float abs = Math.Abs(buffer[index]);
-                            if (abs > peak) peak = abs;
+                                float abs = Math.Abs(buffer[index]);
+                                if (abs > peak) peak = abs;
+                            }
                         }
                     }
                 }

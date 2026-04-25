@@ -1,4 +1,5 @@
 ﻿using Drum_Machine.Core;
+using Drum_Machine.Models;
 using Drum_Machine.Services;
 using Microsoft.Win32;
 using System;
@@ -87,13 +88,15 @@ namespace Drum_Machine
 
         private void LoadSample(int trackIndex)
         {
-            var dialog = new OpenFileDialog();
-            dialog.Filter = "WAV Files (*.wav)|*.wav";
+            var dialog = new OpenFileDialog { Filter = "WAV Files (*.wav)|*.wav" };
 
             if (dialog.ShowDialog() == true)
             {
-                drumMachine.Tracks[trackIndex].SamplePath = dialog.FileName;
-                RenderTracks();
+                if (drumMachine.Tracks[trackIndex] is DrumTrack dt)
+                {
+                    dt.SamplePath = dialog.FileName;
+                    RenderTracks();
+                }
             }
         }
 
@@ -215,11 +218,12 @@ namespace Drum_Machine
 
                 sampleBtn.Click += (s, e) => LoadSample(trackIndex);
 
+                var drumTrack = track as DrumTrack;
                 var sampleName = new TextBlock
                 {
-                    Text = string.IsNullOrEmpty(track.SamplePath)
-                        ? "No sample"
-                        : System.IO.Path.GetFileName(track.SamplePath),
+                    Text = (drumTrack != null && !string.IsNullOrEmpty(drumTrack.SamplePath))
+                        ? System.IO.Path.GetFileName(drumTrack.SamplePath)
+                        : "No sample",
                     Foreground = System.Windows.Media.Brushes.Gray,
                     FontSize = 10
                 };
