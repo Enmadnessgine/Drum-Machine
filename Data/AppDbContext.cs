@@ -29,5 +29,30 @@ namespace Drum_Machine.Data
                 .WithOne()
                 .HasForeignKey<ExportedTrack>(e => e.ProjectId);
         }
+
+        public void SeedData()
+        {
+            Database.EnsureCreated();
+
+            if (!Users.Any(u => u.Username == "Guest"))
+            {
+                var guest = new User
+                {
+                    Username = "Guest",
+                    Password = "GUEST_SYSTEM_ACCOUNT"
+                };
+                Users.Add(guest);
+                SaveChanges();
+
+                var guestSettings = new UserSettings
+                {
+                    UserId = guest.Id,
+                    Theme = "Dark",
+                    MasterVolume = 0.5
+                };
+                Set<UserSettings>().Add(guestSettings);
+                SaveChanges();
+            }
+        }
     }
 }

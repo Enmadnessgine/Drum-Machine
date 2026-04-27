@@ -18,6 +18,8 @@ namespace Drum_Machine.Views
             InitializeComponent();
 
             var context = new AppDbContext();
+            context.SeedData();
+
             _userRepository = new UserRepository(context);
         }
 
@@ -112,5 +114,34 @@ namespace Drum_Machine.Views
                 btnSwitch.Content = "Вже є акаунт? Увійти";
             }
         }
+
+        private void Guest_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var guestUser = _userRepository.GetAll()
+                    .FirstOrDefault(u => u.Username == "Guest");
+
+                if (guestUser != null)
+                {
+                    AppSession.CurrentUser = guestUser;
+
+                    string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                    string userDir = System.IO.Path.Combine(baseDir, "Users", guestUser.Id.ToString());
+
+                    System.IO.Directory.CreateDirectory(System.IO.Path.Combine(userDir, "Samples"));
+                    System.IO.Directory.CreateDirectory(System.IO.Path.Combine(userDir, "Projects"));
+
+                    MainWindow main = new MainWindow();
+                    main.Show();
+                    this.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Помилка входу гостя: {ex.Message}");
+            }
+        }
+
     }
 }
