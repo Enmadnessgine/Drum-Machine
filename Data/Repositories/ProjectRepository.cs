@@ -1,12 +1,20 @@
-﻿using System;
+﻿using Drum_Machine.Data.Entities;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Drum_Machine.Data.Repositories
 {
-    internal class ProjectRepository
+    public class ProjectRepository : BaseRepository<ProjectEntity>
     {
+        public ProjectRepository(AppDbContext context) : base(context) { }
+        public List<ProjectEntity> GetUserProjects(int userId)
+        {
+            return _dbSet
+                .Where(p => p.UserId == userId)
+                .Include(p => p.Tracks)
+                .Include(p => p.ExportedTrack)
+                .ToList();
+        }
     }
 }

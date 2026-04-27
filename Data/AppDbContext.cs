@@ -12,9 +12,9 @@ namespace Drum_Machine.Data
         public DbSet<UserSettings> Settings { get; set; }
         public DbSet<ExportedTrack> ExportedTracks { get; set; }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder options)
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            options.UseSqlite("Data Source=drum_machine.db");
+            optionsBuilder.UseSqlite(@"Data Source=D:\універ\2 семестр\курсова (ооп)\Drum Machine\drum_machine.db");
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

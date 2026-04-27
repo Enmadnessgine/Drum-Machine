@@ -8,12 +8,12 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Threading;
 
-namespace Drum_Machine
+namespace Drum_Machine.Views
 {
     public partial class MainWindow : Window
     {
         private DrumMachine drumMachine;
-        private DispatcherTimer timer;
+        private DispatcherTimer? timer;
         private List<List<ToggleButton>> stepButtons = new List<List<ToggleButton>>();
 
         public MainWindow()
