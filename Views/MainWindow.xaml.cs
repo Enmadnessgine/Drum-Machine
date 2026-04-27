@@ -3,9 +3,11 @@ using Drum_Machine.Models;
 using Drum_Machine.Services;
 using Microsoft.Win32;
 using System;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 using System.Windows.Threading;
 
 namespace Drum_Machine.Views
@@ -26,6 +28,7 @@ namespace Drum_Machine.Views
             InitTimer();
 
             RenderTracks();
+            LoadSamples();
         }
 
         private void InitTimer()
@@ -138,6 +141,50 @@ namespace Drum_Machine.Views
             {
                 drumMachine.RemoveTrack(drumMachine.Tracks.Count - 1);
                 RenderTracks();
+            }
+        }
+
+        private void SampleListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (SampleListBox.SelectedItem is SampleViewModel selectedSample)
+            {
+                var player = new System.Windows.Media.MediaPlayer();
+                player.Open(new Uri(selectedSample.FullPath));
+                player.Play();
+            }
+        }
+
+        private void AddSample_Click(object sender, RoutedEventArgs e)
+        {
+            var openFileDialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "WAV Audio (*.wav)|*.wav",
+                Title = "Оберіть звук для додавання"
+            };
+
+            if (openFileDialog.ShowDialog() == true)
+            {
+                string sourcePath = openFileDialog.FileName;
+                string fileName = System.IO.Path.GetFileName(sourcePath);
+
+                string destDir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                                                      "Users",
+                                                      AppSession.CurrentUser.Id.ToString(),
+                                                      "Samples");
+
+                System.IO.Directory.CreateDirectory(destDir);
+
+                string destPath = System.IO.Path.Combine(destDir, fileName);
+
+                try
+                {
+                    System.IO.File.Copy(sourcePath, destPath, true);
+                    LoadSamples();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Помилка при копіюванні: {ex.Message}");
+                }
             }
         }
 
@@ -280,5 +327,46 @@ namespace Drum_Machine.Views
                 TracksPanel.Children.Add(grid);
             }
         }
+
+        private void LoadSamples()
+        {
+            try
+            {
+                var sampleList = new List<SampleViewModel>();
+
+                string userSamplesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                                                      "Users",
+                                                      AppSession.CurrentUser.Id.ToString(),
+                                                      "Samples");
+
+                if (Directory.Exists(userSamplesPath))
+                {
+                    var files = Directory.GetFiles(userSamplesPath, "*.wav");
+                    foreach (var filePath in files)
+                    {
+                        sampleList.Add(new SampleViewModel
+                        {
+                            Name = Path.GetFileName(filePath),
+                            FullPath = filePath,
+                            IsUserSample = true
+                        });
+                    }
+                }
+
+                SampleListBox.ItemsSource = sampleList;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Помилка завантаження бібліотеки: {ex.Message}");
+            }
+        }
+
+        public class SampleViewModel
+        {
+            public string Name { get; set; }
+            public string FullPath { get; set; }
+            public bool IsUserSample { get; set; }
+        }
+
     }
 }
