@@ -1,4 +1,5 @@
 ﻿using Drum_Machine.Core;
+using Drum_Machine.Data;
 using Drum_Machine.Models;
 using Drum_Machine.Services;
 using Microsoft.Win32;
@@ -8,6 +9,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Threading;
 
 namespace Drum_Machine.Views
@@ -16,6 +18,7 @@ namespace Drum_Machine.Views
     {
         private DrumMachine drumMachine;
         private DispatcherTimer? timer;
+        private Point _dragStartPoint;
         private List<List<ToggleButton>> stepButtons = new List<List<ToggleButton>>();
 
         public MainWindow()
@@ -26,9 +29,9 @@ namespace Drum_Machine.Views
             LoopButton.IsChecked = true;
 
             InitTimer();
-
+            UpdateAccountDisplay();
             RenderTracks();
-            LoadSamples();
+            LoadSamplesFromDb();
         }
 
         private void InitTimer()
@@ -154,6 +157,29 @@ namespace Drum_Machine.Views
             }
         }
 
+        private void SampleListBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            _dragStartPoint = e.GetPosition(null);
+        }
+
+        private void SampleListBox_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.LeftButton == MouseButtonState.Pressed)
+            {
+                Point mousePos = e.GetPosition(null);
+                Vector diff = _dragStartPoint - mousePos;
+
+                if (Math.Abs(diff.X) > SystemParameters.MinimumHorizontalDragDistance ||
+                    Math.Abs(diff.Y) > SystemParameters.MinimumVerticalDragDistance)
+                {
+                    if (SampleListBox.SelectedItem is SampleViewModel selectedSample)
+                    {
+                        DragDrop.DoDragDrop(SampleListBox, selectedSample, DragDropEffects.Copy);
+                    }
+                }
+            }
+        }
+
         private void AddSample_Click(object sender, RoutedEventArgs e)
         {
             var openFileDialog = new Microsoft.Win32.OpenFileDialog
@@ -167,23 +193,63 @@ namespace Drum_Machine.Views
                 string sourcePath = openFileDialog.FileName;
                 string fileName = System.IO.Path.GetFileName(sourcePath);
 
-                string destDir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-                                                      "Users",
-                                                      AppSession.CurrentUser.Id.ToString(),
-                                                      "Samples");
+                string relativeDir = System.IO.Path.Combine("Users", AppSession.CurrentUser.Id.ToString(), "Samples");
+                string dbRelativePath = System.IO.Path.Combine(relativeDir, fileName);
 
-                System.IO.Directory.CreateDirectory(destDir);
-
+                string destDir = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, relativeDir);
                 string destPath = System.IO.Path.Combine(destDir, fileName);
 
                 try
                 {
+                    System.IO.Directory.CreateDirectory(destDir);
                     System.IO.File.Copy(sourcePath, destPath, true);
-                    LoadSamples();
+
+                    using (var db = new AppDbContext())
+                    {
+                        var newSample = new Data.Entities.SampleEntity
+                        {
+                            Name = System.IO.Path.GetFileNameWithoutExtension(fileName),
+                            FilePath = dbRelativePath,
+                            UserId = AppSession.CurrentUser.Id
+                        };
+
+                        db.Samples.Add(newSample);
+                        db.SaveChanges();
+                    }
+
+                    LoadSamplesFromDb();
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Помилка при копіюванні: {ex.Message}");
+                    MessageBox.Show($"Помилка при додаванні семплу: {ex.Message}");
+                }
+            }
+        }
+
+        private void DeleteSample_Click(object sender, RoutedEventArgs e)
+        {
+            if (SampleListBox.SelectedItem is SampleViewModel selectedSample)
+            {
+                var result = MessageBox.Show($"Видалити семпл {selectedSample.Name}?", "Підтвердження", MessageBoxButton.YesNo);
+                if (result == MessageBoxResult.Yes)
+                {
+                    using (var db = new AppDbContext())
+                    {
+                        var sampleInDb = db.Samples.FirstOrDefault(s => s.FilePath == selectedSample.FullPath);
+                        if (sampleInDb != null)
+                        {
+                            db.Samples.Remove(sampleInDb);
+                            db.SaveChanges();
+                        }
+                    }
+
+                    string fullPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, selectedSample.FullPath);
+                    if (System.IO.File.Exists(fullPath))
+                    {
+                        System.IO.File.Delete(fullPath);
+                    }
+
+                    LoadSamplesFromDb();
                 }
             }
         }
@@ -225,6 +291,7 @@ namespace Drum_Machine.Views
             {
                 int trackIndex = i;
                 var track = drumMachine.Tracks[i];
+                var drumTrack = track as DrumTrack;
 
                 var grid = new Grid { Margin = new Thickness(0, 5, 0, 5) };
 
@@ -257,28 +324,64 @@ namespace Drum_Machine.Views
                     track.Name = nameBox.Text;
                 };
 
-                var sampleBtn = new Button
+                bool hasSample = drumTrack != null && !string.IsNullOrEmpty(drumTrack.SamplePath);
+
+                var sampleSlot = new Border
                 {
-                    Content = "Load",
-                    Margin = new Thickness(2)
+                    Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(40, 40, 40)),
+                    BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(80, 80, 80)),
+                    BorderThickness = new Thickness(1),
+                    Margin = new Thickness(2),
+                    AllowDrop = true,
+                    Cursor = System.Windows.Input.Cursors.Hand,
+                    Height = 25
                 };
 
-                sampleBtn.Click += (s, e) => LoadSample(trackIndex);
-
-                var drumTrack = track as DrumTrack;
-                var sampleName = new TextBlock
+                var sampleStatusText = new TextBlock
                 {
-                    Text = (drumTrack != null && !string.IsNullOrEmpty(drumTrack.SamplePath))
-                        ? System.IO.Path.GetFileName(drumTrack.SamplePath)
-                        : "No sample",
-                    Foreground = System.Windows.Media.Brushes.Gray,
-                    FontSize = 10
+                    Text = hasSample ? System.IO.Path.GetFileName(drumTrack.SamplePath) : "Drag sample here",
+                    Foreground = hasSample ? System.Windows.Media.Brushes.Orange : System.Windows.Media.Brushes.Gray,
+                    HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                    VerticalAlignment = System.Windows.VerticalAlignment.Center,
+                    FontSize = 11,
+                    Margin = new Thickness(5, 0, 5, 0),
+                    TextTrimming = TextTrimming.CharacterEllipsis
+                };
+
+                sampleSlot.Child = sampleStatusText;
+                sampleSlot.DragEnter += (s, e) =>
+                {
+                    if (e.Data.GetDataPresent(typeof(SampleViewModel)))
+                    {
+                        sampleSlot.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(80, 80, 80));
+                    }
+                };
+
+                sampleSlot.DragLeave += (s, e) =>
+                {
+                    sampleSlot.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(40, 40, 40));
+                };
+
+                sampleSlot.Drop += (s, e) =>
+                {
+                    if (e.Data.GetDataPresent(typeof(SampleViewModel)))
+                    {
+                        var sample = (SampleViewModel)e.Data.GetData(typeof(SampleViewModel));
+
+                        sampleStatusText.Text = sample.Name;
+                        sampleStatusText.Foreground = System.Windows.Media.Brushes.Orange;
+                        sampleSlot.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
+
+                        if (drumTrack != null)
+                        {
+                            drumTrack.SamplePath = sample.FullPath;
+                        }
+                    }
                 };
 
                 var leftPanel = new StackPanel();
                 leftPanel.Children.Add(nameBox);
-                leftPanel.Children.Add(sampleBtn);
-                leftPanel.Children.Add(sampleName);
+                leftPanel.Children.Add(sampleSlot);
 
                 var slider = new Slider
                 {
@@ -292,14 +395,14 @@ namespace Drum_Machine.Views
                     track.Volume = e.NewValue;
                 };
 
-                var stepsGrid = new UniformGrid { Columns = 16 };
-                var rowButtons = new List<ToggleButton>();
+                var stepsGrid = new System.Windows.Controls.Primitives.UniformGrid { Columns = 16 };
+                var rowButtons = new List<System.Windows.Controls.Primitives.ToggleButton>();
 
                 for (int j = 0; j < 16; j++)
                 {
                     int step = j;
 
-                    var tbtn = new ToggleButton
+                    var tbtn = new System.Windows.Controls.Primitives.ToggleButton
                     {
                         Style = (Style)FindResource("StepButtonStyle"),
                         IsChecked = track.Steps[step]
@@ -328,37 +431,93 @@ namespace Drum_Machine.Views
             }
         }
 
-        private void LoadSamples()
+        private void LoadSamplesFromDb()
         {
             try
             {
-                var sampleList = new List<SampleViewModel>();
-
-                string userSamplesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-                                                      "Users",
-                                                      AppSession.CurrentUser.Id.ToString(),
-                                                      "Samples");
-
-                if (Directory.Exists(userSamplesPath))
+                using (var db = new AppDbContext())
                 {
-                    var files = Directory.GetFiles(userSamplesPath, "*.wav");
-                    foreach (var filePath in files)
+                    var userSamples = db.Samples
+                        .Where(s => s.UserId == AppSession.CurrentUser.Id)
+                        .ToList();
+
+                    SampleListBox.Items.Clear();
+
+                    foreach (var sample in userSamples)
                     {
-                        sampleList.Add(new SampleViewModel
+                        SampleListBox.Items.Add(new SampleViewModel
                         {
-                            Name = Path.GetFileName(filePath),
-                            FullPath = filePath,
-                            IsUserSample = true
+                            Name = sample.Name,
+                            FullPath = sample.FilePath
                         });
                     }
                 }
-
-                SampleListBox.ItemsSource = sampleList;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Помилка завантаження бібліотеки: {ex.Message}");
+                MessageBox.Show($"Помилка при завантаженні бази даних: {ex.Message}");
             }
+        }
+
+        private void SampleSlot_DragEnter(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(typeof(SampleViewModel)))
+            {
+                Border slot = sender as Border;
+                slot.Background = new SolidColorBrush(Color.FromRgb(80, 80, 80));
+            }
+        }
+
+        private void SampleSlot_DragLeave(object sender, DragEventArgs e)
+        {
+            Border slot = sender as Border;
+            slot.Background = new SolidColorBrush(Color.FromRgb(40, 40, 40));
+        }
+
+        private void SampleSlot_Drop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(typeof(SampleViewModel)))
+            {
+                var sample = (SampleViewModel)e.Data.GetData(typeof(SampleViewModel));
+
+                Border slot = sender as Border;
+                TextBlock text = slot.Child as TextBlock;
+
+                text.Text = sample.Name;
+                text.Foreground = Brushes.Orange;
+                slot.Background = new SolidColorBrush(Color.FromRgb(30, 30, 30));
+                slot.Tag = sample.FullPath;
+            }
+        }
+
+        private void UpdateAccountDisplay()
+        {
+            var user = AppSession.CurrentUser;
+
+            if (user != null)
+            {
+                UserNameTextBlock.Text = user.Username;
+
+                if (user.Username.ToLower().Contains("guest") || user.Id == 0)
+                {
+                    AccountActionButton.Content = "Увійти";
+                    AccountActionButton.Background = new SolidColorBrush(Color.FromRgb(0, 120, 215));
+                }
+                else
+                {
+                    AccountActionButton.Content = "Вийти";
+                    AccountActionButton.Background = new SolidColorBrush(Color.FromRgb(60, 60, 60));
+                }
+            }
+        }
+
+        private void AccountAction_Click(object sender, RoutedEventArgs e)
+        {
+            AppSession.CurrentUser = null;
+            var authWindow = new LoginWindow();
+            authWindow.Show();
+
+            this.Close();
         }
 
         public class SampleViewModel

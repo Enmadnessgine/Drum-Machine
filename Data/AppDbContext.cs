@@ -14,7 +14,7 @@ namespace Drum_Machine.Data
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite(@"Data Source=\drum_machine.db");
+            optionsBuilder.UseSqlite(@"Data Source=drum_machine.db");
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
