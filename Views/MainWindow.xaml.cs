@@ -3,6 +3,7 @@ using Drum_Machine.Data;
 using Drum_Machine.Data.Entities;
 using Drum_Machine.Models;
 using Drum_Machine.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Win32;
 using System;
 using System.IO;
@@ -126,13 +127,34 @@ namespace Drum_Machine.Views
 
         private void SaveProjectButton_Click(object sender, RoutedEventArgs e)
         {
-            string projectName = $"Beat_{DateTime.Now:yyyyMMdd_HHmmss}";
-            int savedId = SaveFullProject(projectName);
+            string defaultName = $"Beat_{DateTime.Now:yyyyMMdd_HHmmss}";
+            string currentName = defaultName;
+
+            if (_currentProjectId.HasValue)
+            {
+                using (var db = new AppDbContext())
+                {
+                    var proj = db.Projects.Find(_currentProjectId.Value);
+                    if (proj != null) currentName = proj.Title;
+                }
+            }
+
+            var input = Microsoft.VisualBasic.Interaction.InputBox(
+                "Введіть назву проєкту:",
+                "Збереження",
+                currentName
+            );
+
+            if (string.IsNullOrWhiteSpace(input))
+                return;
+
+            string projectName = input;
+            int savedId = SaveFullProject(projectName, _currentProjectId);
 
             if (savedId > 0)
             {
                 _currentProjectId = savedId;
-                MessageBox.Show($"Проєкт '{projectName}' збережено в базу.", "OK", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show($"Проєкт '{projectName}' успішно збережено!", "Успіх", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 
@@ -583,19 +605,40 @@ namespace Drum_Machine.Views
             public bool IsUserSample { get; set; }
         }
 
-        private int SaveFullProject(string title)
+        private int SaveFullProject(string title, int? existingProjectId)
         {
             try
             {
                 using (var db = new AppDbContext())
                 {
-                    var projectEntity = new ProjectEntity
+                    ProjectEntity projectEntity;
+
+                    if (existingProjectId.HasValue)
                     {
-                        Title = title,
-                        BPM = 120,
-                        UserId = AppSession.CurrentUser.Id,
-                        Tracks = new List<TrackEntity>()
-                    };
+                        projectEntity = db.Projects
+                            .Include(p => p.Tracks)
+                            .FirstOrDefault(p => p.Id == existingProjectId.Value);
+
+                        if (projectEntity != null)
+                        {
+                            db.Tracks.RemoveRange(projectEntity.Tracks);
+                            projectEntity.Tracks.Clear();
+                        }
+                        else
+                        {
+                            projectEntity = new ProjectEntity { UserId = AppSession.CurrentUser.Id, Tracks = new List<TrackEntity>() };
+                            db.Projects.Add(projectEntity);
+                        }
+                    }
+
+                    else
+                    {
+                        projectEntity = new ProjectEntity { UserId = AppSession.CurrentUser.Id, Tracks = new List<TrackEntity>() };
+                        db.Projects.Add(projectEntity);
+                    }
+
+                    projectEntity.Title = title;
+                    projectEntity.BPM = (int)BpmSlider.Value;
 
                     foreach (var baseTrack in drumMachine.Tracks)
                     {
@@ -615,10 +658,7 @@ namespace Drum_Machine.Views
                         }
                     }
 
-                    db.Projects.Add(projectEntity);
                     db.SaveChanges();
-
-                    MessageBox.Show($"Проєкт '{title}' успішно збережено!");
                     return projectEntity.Id;
                 }
             }
@@ -626,6 +666,51 @@ namespace Drum_Machine.Views
             {
                 MessageBox.Show($"Помилка збереження: {ex.Message}");
                 return -1;
+            }
+        }
+
+        private void LoadProjectButton_Click(object sender, RoutedEventArgs e)
+        {
+            var loadWindow = new LoadProjectWindow();
+            loadWindow.Owner = this;
+
+            if (loadWindow.ShowDialog() == true && loadWindow.SelectedProjectId.HasValue)
+            {
+                int projectId = loadWindow.SelectedProjectId.Value;
+
+                using (var db = new AppDbContext())
+                {
+                    var project = db.Projects
+                        .Include(p => p.Tracks)
+                        .FirstOrDefault(p => p.Id == projectId);
+
+                    if (project != null)
+                    {
+                        drumMachine.Tracks.Clear();
+
+                        foreach (var trackEntity in project.Tracks)
+                        {
+                            var newTrack = new DrumTrack(trackEntity.Name, drumMachine.StepsCount)
+                            {
+                                SamplePath = trackEntity.SamplePath,
+                                Volume = trackEntity.Volume
+                            };
+
+                            string[] stepsArray = trackEntity.StepsData.Split(',');
+
+                            for (int i = 0; i < stepsArray.Length && i < drumMachine.StepsCount; i++)
+                            {
+                                newTrack.Steps[i] = (stepsArray[i] == "1");
+                            }
+
+                            drumMachine.Tracks.Add(newTrack);
+                        }
+
+                        _currentProjectId = project.Id;
+                        RenderTracks();
+                        MessageBox.Show($"Проєкт '{project.Title}' успішно завантажено!", "Успіх", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                }
             }
         }
 

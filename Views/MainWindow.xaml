@@ -43,16 +43,17 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Content="▶ Play" Click="Play_Click" Margin="2" Width="60"/>
-                <Button Content="■ Stop" Click="Stop_Click" Margin="2" Width="60"/>
+                <Button Content="▶ Play" Click="Play_Click" Background="OrangeRed" Margin="2" Width="60"/>
+                <Button Content="■ Stop" Click="Stop_Click" Background="PaleVioletRed" Margin="2" Width="60"/>
 
                 <ToggleButton x:Name="LoopButton"
                               Content="Loop"
+                              Background="Aqua"
                               Margin="2"
                               Checked="Loop_Checked"
                               Unchecked="Loop_Unchecked"/>
 
-                <!--<Button Content="💾 Save" Click="Save_Click" Margin="2"/>-->
+                <Button Content="Load Project" Click="LoadProjectButton_Click" Margin="5"/>
                 <Button Content="Save Project" Click="SaveProjectButton_Click" Width="100" Height="30" Margin="5"/>
 
                 <Button Content="Export WAV" Click="ExportWavButton_Click" Width="100" Height="30" Margin="5"/>
