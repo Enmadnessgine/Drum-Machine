@@ -14,5 +14,6 @@ namespace Drum_Machine.Data.Entities
         public double Volume { get; set; } = 1.0;
         public string StepsData { get; set; } = "0000000000000000";
         public int ProjectId { get; set; }
+        public virtual ProjectEntity Project { get; set; } = null!;
     }
 }

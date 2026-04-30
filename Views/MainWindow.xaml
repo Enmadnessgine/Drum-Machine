@@ -52,7 +52,10 @@
                               Checked="Loop_Checked"
                               Unchecked="Loop_Unchecked"/>
 
-                <Button Content="💾 Save" Click="Save_Click" Margin="2"/>
+                <!--<Button Content="💾 Save" Click="Save_Click" Margin="2"/>-->
+                <Button Content="Save Project" Click="SaveProjectButton_Click" Width="100" Height="30" Margin="5"/>
+
+                <Button Content="Export WAV" Click="ExportWavButton_Click" Width="100" Height="30" Margin="5"/>
                 <Button Content="Add Track" Click="AddTrack_Click" Margin="10,2"/>
 
                 <TextBlock Text="BPM:" Foreground="White" Margin="20,0,5,0" VerticalAlignment="Center"/>

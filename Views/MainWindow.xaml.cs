@@ -1,5 +1,6 @@
 ﻿using Drum_Machine.Core;
 using Drum_Machine.Data;
+using Drum_Machine.Data.Entities;
 using Drum_Machine.Models;
 using Drum_Machine.Services;
 using Microsoft.Win32;
@@ -20,6 +21,8 @@ namespace Drum_Machine.Views
         private DispatcherTimer? timer;
         private Point _dragStartPoint;
         private List<List<ToggleButton>> stepButtons = new List<List<ToggleButton>>();
+
+        private int? _currentProjectId = null;
 
         public MainWindow()
         {
@@ -118,6 +121,59 @@ namespace Drum_Machine.Views
                 exporter.SaveWav(dialog.FileName, buffer);
 
                 MessageBox.Show("Saved!");
+            }
+        }
+
+        private void SaveProjectButton_Click(object sender, RoutedEventArgs e)
+        {
+            string projectName = $"Beat_{DateTime.Now:yyyyMMdd_HHmmss}";
+            int savedId = SaveFullProject(projectName);
+
+            if (savedId > 0)
+            {
+                _currentProjectId = savedId;
+                MessageBox.Show($"Проєкт '{projectName}' збережено в базу.", "OK", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        private void ExportWavButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentProjectId == null)
+            {
+                MessageBox.Show("Будь ласка, спочатку збережіть проєкт (натисніть 'Save Project'), щоб ми могли прив'язати до нього цей WAV-файл.", "Увага", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            Microsoft.Win32.SaveFileDialog saveFileDialog = new Microsoft.Win32.SaveFileDialog
+            {
+                Filter = "WAV file (*.wav)|*.wav",
+                FileName = "MyExportedBeat.wav"
+            };
+
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                string wavFilePath = saveFileDialog.FileName;
+
+                try
+                {
+                    using (var db = new AppDbContext())
+                    {
+                        var exportedTrack = new ExportedTrack
+                        {
+                            FilePath = wavFilePath,
+                            ProjectId = _currentProjectId.Value
+                        };
+
+                        db.ExportedTracks.Add(exportedTrack);
+                        db.SaveChanges();
+                    }
+
+                    MessageBox.Show("WAV файл успішно експортовано та прив'язано до проєкту!", "Готово", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Помилка при експорті: {ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
 
@@ -525,6 +581,52 @@ namespace Drum_Machine.Views
             public string Name { get; set; }
             public string FullPath { get; set; }
             public bool IsUserSample { get; set; }
+        }
+
+        private int SaveFullProject(string title)
+        {
+            try
+            {
+                using (var db = new AppDbContext())
+                {
+                    var projectEntity = new ProjectEntity
+                    {
+                        Title = title,
+                        BPM = 120,
+                        UserId = AppSession.CurrentUser.Id,
+                        Tracks = new List<TrackEntity>()
+                    };
+
+                    foreach (var baseTrack in drumMachine.Tracks)
+                    {
+                        if (baseTrack is DrumTrack drumTrack)
+                        {
+                            string pattern = string.Join(",", drumTrack.Steps.Select(s => s ? "1" : "0"));
+
+                            var trackEntity = new TrackEntity
+                            {
+                                Name = drumTrack.Name,
+                                SamplePath = drumTrack.SamplePath,
+                                Volume = drumTrack.Volume,
+                                StepsData = pattern
+                            };
+
+                            projectEntity.Tracks.Add(trackEntity);
+                        }
+                    }
+
+                    db.Projects.Add(projectEntity);
+                    db.SaveChanges();
+
+                    MessageBox.Show($"Проєкт '{title}' успішно збережено!");
+                    return projectEntity.Id;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Помилка збереження: {ex.Message}");
+                return -1;
+            }
         }
 
     }
