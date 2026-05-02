@@ -112,9 +112,8 @@ namespace Drum_Machine.Views
 
         private void SaveProjectButton_Click(object sender, RoutedEventArgs e)
         {
-            string defaultName = $"Beat_{DateTime.Now:yyyyMMdd_HHmmss}";
-            string currentName = defaultName;
-
+            // 1. Визначаємо назву за замовчуванням для віконця
+            string currentName = $"Beat_{DateTime.Now:yyyyMMdd_HHmmss}";
             if (_currentProjectId.HasValue)
             {
                 using (var db = new AppDbContext())
@@ -124,21 +123,51 @@ namespace Drum_Machine.Views
                 }
             }
 
+            // 2. Запитуємо користувача назву
             var input = Microsoft.VisualBasic.Interaction.InputBox(
                 "Введіть назву проєкту:",
                 "Збереження",
                 currentName
             );
 
-            if (string.IsNullOrWhiteSpace(input))
-                return;
+            if (string.IsNullOrWhiteSpace(input)) return;
 
             string projectName = input;
-            int savedId = SaveFullProject(projectName, _currentProjectId);
+            int? projectIdToUse = _currentProjectId;
+
+            // 3. ПЕРЕВІРКА НА ДУБЛІКАТ НАЗВИ
+            using (var db = new AppDbContext())
+            {
+                // Шукаємо, чи є у ЦЬОГО користувача проєкт з такою самою назвою
+                var existingProject = db.Projects
+                    .FirstOrDefault(p => p.Title == projectName && p.UserId == AppSession.CurrentUser.Id);
+
+                if (existingProject != null)
+                {
+                    // Якщо знайшли проєкт з такою назвою — ми будемо перезаписувати саме його
+                    projectIdToUse = existingProject.Id;
+
+                    // Якщо це не той самий проєкт, який у нас зараз відкритий, 
+                    // можна додати підтвердження від користувача (опціонально)
+                    if (_currentProjectId != existingProject.Id)
+                    {
+                        var result = MessageBox.Show(
+                            $"Проєкт з назвою '{projectName}' вже існує. Бажаєте перезаписати його?",
+                            "Підтвердження",
+                            MessageBoxButton.YesNo,
+                            MessageBoxImage.Question);
+
+                        if (result == MessageBoxResult.No) return;
+                    }
+                }
+            }
+
+            // 4. Викликаємо збереження (метод SaveFullProject ми вже адаптували минулого разу)
+            int savedId = SaveFullProject(projectName, projectIdToUse);
 
             if (savedId > 0)
             {
-                _currentProjectId = savedId;
+                _currentProjectId = savedId; // Запам'ятовуємо ID активного проєкту
                 MessageBox.Show($"Проєкт '{projectName}' успішно збережено!", "Успіх", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
