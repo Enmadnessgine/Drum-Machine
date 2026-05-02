@@ -110,21 +110,6 @@ namespace Drum_Machine.Views
             }
         }
 
-        private void Save_Click(object sender, RoutedEventArgs e)
-        {
-            var dialog = new Microsoft.Win32.SaveFileDialog();
-            dialog.Filter = "WAV file (*.wav)|*.wav";
-
-            if (dialog.ShowDialog() == true)
-            {
-                var buffer = drumMachine.RenderToBuffer();
-                var exporter = new WavExporter();
-                exporter.SaveWav(dialog.FileName, buffer);
-
-                MessageBox.Show("Saved!");
-            }
-        }
-
         private void SaveProjectButton_Click(object sender, RoutedEventArgs e)
         {
             string defaultName = $"Beat_{DateTime.Now:yyyyMMdd_HHmmss}";
@@ -178,23 +163,45 @@ namespace Drum_Machine.Views
 
                 try
                 {
+                    var buffer = drumMachine.RenderToBuffer();
+                    var exporter = new WavExporter();
+                    exporter.SaveWav(wavFilePath, buffer);
+
                     using (var db = new AppDbContext())
                     {
-                        var exportedTrack = new ExportedTrack
-                        {
-                            FilePath = wavFilePath,
-                            ProjectId = _currentProjectId.Value
-                        };
+                        var existingExport = db.ExportedTracks
+                                               .FirstOrDefault(e => e.ProjectId == _currentProjectId.Value);
 
-                        db.ExportedTracks.Add(exportedTrack);
+                        if (existingExport != null)
+                        {
+                            existingExport.FilePath = wavFilePath;
+                            existingExport.ExportedAt = DateTime.Now;
+                        }
+                        else
+                        {
+                            var newExportedTrack = new ExportedTrack
+                            {
+                                FilePath = wavFilePath,
+                                ProjectId = _currentProjectId.Value,
+                                ExportedAt = DateTime.Now
+                            };
+                            db.ExportedTracks.Add(newExportedTrack);
+                        }
+
                         db.SaveChanges();
                     }
 
-                    MessageBox.Show("WAV файл успішно експортовано та прив'язано до проєкту!", "Готово", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show("WAV файл успішно згенеровано та прив'язано до проєкту!", "Готово", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Помилка при експорті: {ex.Message}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    string errorMessage = ex.Message;
+                    if (ex.InnerException != null)
+                    {
+                        errorMessage += "\n\nДеталі (Inner Exception): " + ex.InnerException.Message;
+                    }
+
+                    MessageBox.Show($"Помилка при експорті:\n\n{errorMessage}", "Помилка", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
@@ -687,6 +694,7 @@ namespace Drum_Machine.Views
                     if (project != null)
                     {
                         drumMachine.Tracks.Clear();
+                        BpmSlider.Value = project.BPM;
 
                         foreach (var trackEntity in project.Tracks)
                         {
