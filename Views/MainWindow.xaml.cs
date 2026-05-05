@@ -112,7 +112,6 @@ namespace Drum_Machine.Views
 
         private void SaveProjectButton_Click(object sender, RoutedEventArgs e)
         {
-            // 1. Визначаємо назву за замовчуванням для віконця
             string currentName = $"Beat_{DateTime.Now:yyyyMMdd_HHmmss}";
             if (_currentProjectId.HasValue)
             {
@@ -123,7 +122,6 @@ namespace Drum_Machine.Views
                 }
             }
 
-            // 2. Запитуємо користувача назву
             var input = Microsoft.VisualBasic.Interaction.InputBox(
                 "Введіть назву проєкту:",
                 "Збереження",
@@ -135,20 +133,15 @@ namespace Drum_Machine.Views
             string projectName = input;
             int? projectIdToUse = _currentProjectId;
 
-            // 3. ПЕРЕВІРКА НА ДУБЛІКАТ НАЗВИ
             using (var db = new AppDbContext())
             {
-                // Шукаємо, чи є у ЦЬОГО користувача проєкт з такою самою назвою
                 var existingProject = db.Projects
                     .FirstOrDefault(p => p.Title == projectName && p.UserId == AppSession.CurrentUser.Id);
 
                 if (existingProject != null)
                 {
-                    // Якщо знайшли проєкт з такою назвою — ми будемо перезаписувати саме його
                     projectIdToUse = existingProject.Id;
 
-                    // Якщо це не той самий проєкт, який у нас зараз відкритий, 
-                    // можна додати підтвердження від користувача (опціонально)
                     if (_currentProjectId != existingProject.Id)
                     {
                         var result = MessageBox.Show(
@@ -162,12 +155,11 @@ namespace Drum_Machine.Views
                 }
             }
 
-            // 4. Викликаємо збереження (метод SaveFullProject ми вже адаптували минулого разу)
             int savedId = SaveFullProject(projectName, projectIdToUse);
 
             if (savedId > 0)
             {
-                _currentProjectId = savedId; // Запам'ятовуємо ID активного проєкту
+                _currentProjectId = savedId;
                 MessageBox.Show($"Проєкт '{projectName}' успішно збережено!", "Успіх", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
@@ -612,7 +604,14 @@ namespace Drum_Machine.Views
             {
                 UserNameTextBlock.Text = user.Username;
 
-                if (user.Username.ToLower().Contains("guest") || user.Id == 0)
+                bool isGuest = user.Id == 6 || user.Username.ToLower().Contains("Guest");
+                var guestVisibility = isGuest ? Visibility.Collapsed : Visibility.Visible;
+
+                LoadProjectButton.Visibility = guestVisibility;
+                SaveProjectButton.Visibility = guestVisibility;
+                ExportWavButton.Visibility = guestVisibility;
+
+                if (isGuest)
                 {
                     AccountActionButton.Content = "Увійти";
                     AccountActionButton.Background = new SolidColorBrush(Color.FromRgb(0, 120, 215));

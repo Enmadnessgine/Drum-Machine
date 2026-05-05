@@ -45,19 +45,20 @@ namespace Drum_Machine.Data.Repositories
 
             if (sample != null)
             {
-                try
+                if (!string.IsNullOrEmpty(sample.FilePath) && File.Exists(sample.FilePath))
                 {
-                    if (File.Exists(sample.FilePath))
+                    try
                     {
                         File.Delete(sample.FilePath);
                     }
-                }
-                catch (IOException ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Помилка видалення файлу: {ex.Message}");
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Не вдалося видалити файл: {ex.Message}");
+                    }
                 }
 
-                base.Delete(id);
+                _dbSet.Remove(sample);
+                this.Save();
             }
         }
     }

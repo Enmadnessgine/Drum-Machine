@@ -53,10 +53,10 @@
                               Checked="Loop_Checked"
                               Unchecked="Loop_Unchecked"/>
 
-                <Button Content="Load Project" Click="LoadProjectButton_Click" Margin="5"/>
-                <Button Content="Save Project" Click="SaveProjectButton_Click" Width="100" Height="30" Margin="5"/>
+                <Button x:Name="LoadProjectButton" Content="Load Project" Click="LoadProjectButton_Click" Margin="5"/>
+                <Button x:Name="SaveProjectButton"  Content="Save Project" Click="SaveProjectButton_Click" Width="100" Height="30" Margin="5"/>
 
-                <Button Content="Export WAV" Click="ExportWavButton_Click" Width="100" Height="30" Margin="5"/>
+                <Button x:Name="ExportWavButton" Content="Export WAV" Click="ExportWavButton_Click" Width="100" Height="30" Margin="5"/>
                 <Button Content="Add Track" Click="AddTrack_Click" Margin="10,2"/>
 
                 <TextBlock Text="BPM:" Foreground="White" Margin="20,0,5,0" VerticalAlignment="Center"/>
@@ -150,13 +150,27 @@
                     <Button Grid.Row="2" 
                             Content="+ Add sample" 
                             Click="AddSample_Click" 
-                            Margin="0,10,0,0" 
+                            Margin="0,10,122,0" 
                             Height="30" 
                             Background="#3D3D3D" 
                             Foreground="White"
                             Cursor="Hand">
                         <Button.Resources>
                             <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="3"/>
+                            </Style>
+                        </Button.Resources>
+                    </Button>
+                    <Button Grid.Row="2" 
+                        Content="Delete Sample" 
+                        Click="DeleteSample_Click" 
+                        Margin="114,10,7,0" 
+                        Height="30" 
+                        Background="DarkRed" 
+                        Foreground="White"
+                        Cursor="Hand">
+                        <Button.Resources>
+                            <Style TargetType="{x:Type Border}">
                                 <Setter Property="CornerRadius" Value="3"/>
                             </Style>
                         </Button.Resources>
