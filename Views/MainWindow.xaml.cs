@@ -22,7 +22,7 @@ namespace Drum_Machine.Views
         private DispatcherTimer? timer;
         private Point _dragStartPoint;
         private List<List<ToggleButton>> stepButtons = new List<List<ToggleButton>>();
-
+        private string currentLang = "uk-UA";
         private int? _currentProjectId = null;
 
         public MainWindow()
@@ -122,9 +122,12 @@ namespace Drum_Machine.Views
                 }
             }
 
+            string inputPrompt = Application.Current.FindResource("m_InputProjectName").ToString();
+            string saveTitle = Application.Current.FindResource("m_SaveTitle").ToString();
+
             var input = Microsoft.VisualBasic.Interaction.InputBox(
-                "Введіть назву проєкту:",
-                "Збереження",
+                inputPrompt,
+                saveTitle,
                 currentName
             );
 
@@ -144,9 +147,13 @@ namespace Drum_Machine.Views
 
                     if (_currentProjectId != existingProject.Id)
                     {
+                        string existsFormat = Application.Current.FindResource("m_ProjectExistsPrompt").ToString();
+                        string confirmTitle = Application.Current.FindResource("m_ConfirmTitle").ToString();
+                        string existsMessage = string.Format(existsFormat, projectName);
+
                         var result = MessageBox.Show(
-                            $"Проєкт з назвою '{projectName}' вже існує. Бажаєте перезаписати його?",
-                            "Підтвердження",
+                            existsMessage,
+                            confirmTitle,
                             MessageBoxButton.YesNo,
                             MessageBoxImage.Question);
 
@@ -160,7 +167,12 @@ namespace Drum_Machine.Views
             if (savedId > 0)
             {
                 _currentProjectId = savedId;
-                MessageBox.Show($"Проєкт '{projectName}' успішно збережено!", "Успіх", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                string successFormat = Application.Current.FindResource("m_ProjectSavedPrompt").ToString();
+                string successTitle = Application.Current.FindResource("m_SuccessTitle").ToString();
+                string successMessage = string.Format(successFormat, projectName);
+
+                MessageBox.Show(successMessage, successTitle, MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 
@@ -750,5 +762,47 @@ namespace Drum_Machine.Views
             }
         }
 
+        public void ChangeLanguage(string langCode)
+        {
+            ResourceDictionary dict = new ResourceDictionary();
+            switch (langCode)
+            {
+                case "en-US":
+                    dict.Source = new Uri("Resources/Lang.en-US.xaml", UriKind.Relative);
+                    break;
+                case "uk-UA":
+                    dict.Source = new Uri("Resources/Lang.uk-UA.xaml", UriKind.Relative);
+                    break;
+            }
+
+            ResourceDictionary oldDict = (from d in Application.Current.Resources.MergedDictionaries
+                                          where d.Source != null && d.Source.OriginalString.Contains("Lang.")
+                                          select d).First();
+
+            if (oldDict != null)
+            {
+                int ind = Application.Current.Resources.MergedDictionaries.IndexOf(oldDict);
+                Application.Current.Resources.MergedDictionaries.Remove(oldDict);
+                Application.Current.Resources.MergedDictionaries.Insert(ind, dict);
+            }
+            else
+            {
+                Application.Current.Resources.MergedDictionaries.Add(dict);
+            }
+        }
+
+        private void LanguageToggle_Click(object sender, RoutedEventArgs e)
+        {
+            if (currentLang == "uk-UA")
+            {
+                ChangeLanguage("en-US");
+                currentLang = "en-US";
+            }
+            else
+            {
+                ChangeLanguage("uk-UA");
+                currentLang = "uk-UA";
+            }
+        }
     }
 }
