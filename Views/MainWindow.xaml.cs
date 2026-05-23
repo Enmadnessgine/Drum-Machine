@@ -96,20 +96,6 @@ namespace Drum_Machine.Views
                 BpmTextBox.Text = ((int)e.NewValue).ToString();
         }
 
-        private void LoadSample(int trackIndex)
-        {
-            var dialog = new OpenFileDialog { Filter = "WAV Files (*.wav)|*.wav" };
-
-            if (dialog.ShowDialog() == true)
-            {
-                if (drumMachine.Tracks[trackIndex] is DrumTrack dt)
-                {
-                    dt.SamplePath = dialog.FileName;
-                    RenderTracks();
-                }
-            }
-        }
-
         private void SaveProjectButton_Click(object sender, RoutedEventArgs e)
         {
             string currentName = $"Beat_{DateTime.Now:yyyyMMdd_HHmmss}";

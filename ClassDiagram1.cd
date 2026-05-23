@@ -1,0 +1,145 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="Drum_Machine.Data.Repositories.BaseRepository&lt;T&gt;">
+    <Position X="3" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAYAAIAAAAAABAAAAAAAIAAAAAEAAAAAAgAAAAAAAIA=</HashCode>
+      <FileName>Data\Repositories\BaseRepository.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Drum_Machine.Data.Repositories.ProjectRepository">
+    <Position X="0.75" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Data\Repositories\ProjectRepository.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Drum_Machine.Data.Repositories.SampleRepository">
+    <Position X="3" Y="4" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAACACAAAAAAAAEAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Data\Repositories\SampleRepository.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Drum_Machine.Data.Repositories.UserRepository">
+    <Position X="5.25" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAIAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAA=</HashCode>
+      <FileName>Data\Repositories\UserRepository.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Drum_Machine.Data.Entities.ExportedTrack">
+    <Position X="7" Y="4" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAAAAAAAAAAAAABAAAAAAAAABAAAAIAAA=</HashCode>
+      <FileName>Data\Entities\ExportedTrack.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Drum_Machine.Data.Entities.ProjectEntity">
+    <Position X="12.25" Y="4" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAEgAAEAAAAAAAAgAAQAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Data\Entities\ProjectEntity.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Drum_Machine.Data.Entities.SampleEntity">
+    <Position X="14" Y="4" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAAAAAAAAAAAwAAAAAAAAAAABAAAAAAAA=</HashCode>
+      <FileName>Data\Entities\SampleEntity.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Drum_Machine.Data.Entities.TrackEntity">
+    <Position X="10.5" Y="4" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAIAAAAAAAAAAACAQABAAAACAAAAIAAAAAAAA=</HashCode>
+      <FileName>Data\Entities\TrackEntity.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Drum_Machine.Data.Entities.User">
+    <Position X="8.75" Y="4" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAAAAACQAAAAAAAAAAAAACgAAAAAAAAQA=</HashCode>
+      <FileName>Data\Entities\User.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Drum_Machine.Data.AppDbContext">
+    <Position X="8.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAACAAAcAAAAAAAAAAAAAAEAAAAAEggAAAAAAAAQA=</HashCode>
+      <FileName>Data\AppDbContext.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Drum_Machine.Services.AudioPlayer">
+    <Position X="9.5" Y="7.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAgAAAAAAAAAA=</HashCode>
+      <FileName>Services\AudioPlayer.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Drum_Machine.Services.WavExporter" BaseTypeListCollapsed="true">
+    <Position X="4.25" Y="7.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAA=</HashCode>
+      <FileName>Services\WavExporter.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.658" Collapsed="true" />
+  </Class>
+  <Class Name="Drum_Machine.Services.WavReader">
+    <Position X="13" Y="8.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Services\WavReader.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Drum_Machine.Models.BaseTrack">
+    <Position X="2" Y="6" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAABAAAAAAAAAAAAAAAAAAQAAAAAAAAAgAIAAAAAAAA=</HashCode>
+      <FileName>Models\BaseTrack.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Drum_Machine.Models.DrumTrack">
+    <Position X="2" Y="8.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAA=</HashCode>
+      <FileName>Models\DrumTrack.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Drum_Machine.Core.Mappers.TrackMapper">
+    <Position X="13" Y="7.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAEAAAAAAA=</HashCode>
+      <FileName>Core\Mappers\TrackMapper.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Drum_Machine.Core.AppSession">
+    <Position X="10.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Core\AppSession.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Drum_Machine.Core.DrumMachine">
+    <Position X="11.25" Y="7.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAIAAAAAEAADAEAAAAACAAAAABAAAABAIAIAAAAACA=</HashCode>
+      <FileName>Core\DrumMachine.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Drum_Machine.Data.Entities.UserSettings">
+    <Position X="7" Y="6" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAABAAAAAAAAAAQQAAAAAAgAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Data\Entities\UserSettings.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Interface Name="Drum_Machine.Services.IAudioExporter">
+    <Position X="4.25" Y="6.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAA=</HashCode>
+      <FileName>Services\WavExporter.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>
