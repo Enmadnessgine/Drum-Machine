@@ -50,6 +50,11 @@ namespace Drum_Machine.Views
         {
             drumMachine.PlayStep();
             HighlightStep(drumMachine.CurrentStep);
+
+            if (drumMachine.CurrentStep == 0 && !drumMachine.IsLooping)
+            {
+                timer.Stop();
+            }
         }
 
         private void UpdateBPM()

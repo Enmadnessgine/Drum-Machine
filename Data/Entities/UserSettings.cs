@@ -11,6 +11,7 @@ namespace Drum_Machine.Data.Entities
 
         public string Theme { get; set; } = "Dark";
         public double MasterVolume { get; set; } = 1.0;
+        public string Language { get; set; } = "uk";
 
         public virtual User User { get; set; } = null!;
     }

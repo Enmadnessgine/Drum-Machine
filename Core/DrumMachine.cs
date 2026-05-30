@@ -11,6 +11,7 @@ namespace Drum_Machine.Core
         public int CurrentStep { get; private set; } = 0;
         public int StepsCount { get; } = 16;
         public bool IsLooping { get; set; } = true;
+        public double MasterVolume { get; set; } = 1.0;
 
         private AudioPlayer player = new AudioPlayer();
 
@@ -90,7 +91,7 @@ namespace Drum_Machine.Core
                             int index = offset + i;
                             if (index < buffer.Length)
                             {
-                                float sample = sampleData[i] * (float)drumTrack.Volume * 0.3f;
+                                float sample = sampleData[i] * (float)drumTrack.Volume * (float)MasterVolume * 0.3f;
 
                                 buffer[index] += sample;
 

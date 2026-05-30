@@ -3,6 +3,7 @@
     public class DrumTrack : BaseTrack
     {
         public string SamplePath { get; set; } = "";
+        public bool IsSolo { get; set; } = false;
 
         public DrumTrack(string name, int stepCount) : base(name, stepCount)
         {
